@@ -1,0 +1,17 @@
+services:
+  api_get_block:
+    build: ./back/block/get/
+    container_name: api-get-block
+    platform: linux/amd64
+    ports:
+      - 9000:8080
+  
+  db:
+    image: mysql:8.4
+    container_name: db-tenji
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - 3306:3306
+    
