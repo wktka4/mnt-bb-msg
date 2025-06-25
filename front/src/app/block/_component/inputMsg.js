@@ -11,47 +11,64 @@ import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 
+import { useAuth } from "react-oidc-context";
+
 // ブロックを選択してから、メッセージを変更する画面
 export default function InputMsg({
   selectedBlock,
   setSelectedBlock
 }) {
 
+  const auth = useAuth();
+
   // メッセージデータ
   const [msgs, setMsgs] = useState([]);
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
 
   const onSubmitFun = (data) => {
-    console.log(data);
+    fetch(
+      'http://localhost/api/postMsg/2015-03-31/functions/function/invocations',
+      {
+        method: "POST",
+        body: `{"headers":{"Authorization":"${auth.user?.id_token}"},"body":"${JSON.stringify(data).replaceAll('"', '\\"')}"}`
+      }
+    ).then(res => closeFun());
+  }
+
+  const closeFun = () => {
+    reset();
     setSelectedBlock("");
   }
 
   useEffect(
     // ブロックのメッセージを取得する
     () => {
-      const b = [
-        { category: "nomal", angle: 0, message: "test", reading: "testtest", file: "" },
-        { category: "nomal", angle: 1, message: "test", reading: "testtest", file: "" },
-        { category: "nomal", angle: 2, message: "test", reading: "testtest", file: "" },
-        { category: "nomal", angle: 3, message: "test", reading: "testtest", file: "" },
-      ]
-      setMsgs(b)
+      console.log(1)
+      fetch('http://localhost/api/getMsg/2015-03-31/functions/function/invocations',
+        {
+          method: "POST",
+          body: `{"queryStringParameters":{"code":"${selectedBlock}"}}`
+        }
+      ).then(res => res.json())
+        .then(resJson => setMsgs(resJson.body?.datas))
     }
-    , []);
+    , [selectedBlock]);
 
   return (<>
-    <Modal show={selectedBlock} onHide={() => setSelectedBlock("")} fullscreen={true} className="p-0">
+    <Modal show={selectedBlock} onHide={() => closeFun()} fullscreen={true} className="p-0">
       <Modal.Header closeButton>
         <Modal.Title>ブロック（{selectedBlock}）のメッセージ修正</Modal.Title>
       </Modal.Header>
       <Form onSubmit={handleSubmit(onSubmitFun)}>
-        <Modal.Body style={{maxHeight: "75vh"}}>
+        <input type="hidden" value={selectedBlock} {...register(`code`)} />
+        <Modal.Body style={{ maxHeight: "75vh" }}>
           <div className="overflow-auto">
             {msgs.map((msg, index) =>
               <Card key={index}>
-                <Card.Header>カテゴリ：{msg.category}、アングル：{msg.angle}</Card.Header>
-                <input type="hidden" value={msg.category} {...register(`${index}.category`)} />
+                <Card.Header>カテゴリ：{msg.messagecategory_jp}、アングル：{msg.angle}</Card.Header>
+                <input type="hidden" value={msg.messagecategory} {...register(`${index}.messagecategory`)} />
                 <input type="hidden" value={msg.angle} {...register(`${index}.angle`)} />
+                <input type="hidden" value={msg.wav} {...register(`${index}.wav`)} />
                 <Card.Body>
                   <Row className="mb-2">
                     <Col sm="6">
@@ -63,7 +80,7 @@ export default function InputMsg({
                           <Form.Control
                             as="textarea"
                             rows={2}
-                            defaultValue={msg.message}
+                            value={msg.message}
                             {...register(`${index}.message`)}
                           />
                         </Col>
@@ -78,7 +95,7 @@ export default function InputMsg({
                           <Form.Control
                             as="textarea"
                             rows={2}
-                            defaultValue={msg.reading}
+                            value={msg.reading}
                             {...register(`${index}.reading`)}
                           />
                         </Col>
@@ -91,7 +108,7 @@ export default function InputMsg({
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setSelectedBlock("")}>
+          <Button variant="secondary" onClick={() => closeFun()}>
             Close
           </Button>
           <Button variant="primary" type="submit">

@@ -31,8 +31,7 @@ logger.info("SUCCESS: Connection to RDS for MySQL instance succeeded")
 
 sql_get_data = "" \
     "SELECT " \
-    "    bd.code" \
-    "  , bd.name" \
+    "    %s" \
     "  , pm.messagecategory" \
     "  , pm.messagecategory_jp" \
     "  , an.angle " \
@@ -46,10 +45,8 @@ sql_get_data = "" \
     "LEFT OUTER JOIN tenji.blockmessage bm " \
     "   ON bm.angle = an.angle " \
     "  AND bm.messagecategory = pm.messagecategory " \
-    "LEFT OUTER JOIN tenji.blockdata bd " \
-    "   ON bd.code = bm.code " \
-    "WHERE bd.code = %s " \
-    "   OR bd.code IS NULL " \
+    "  AND (bm.code = %s " \
+    "    OR bm.code IS NULL) " \
     "ORDER BY pm.messagecategory, an.angle " \
     ";" \
 
@@ -62,7 +59,7 @@ def handler(event, context):
 
     # メッセージをカテゴリ、アングル網羅した値を取得
     cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute(sql_get_data, (code,))
+    cur.execute(sql_get_data, (code,code, ))
     datas = cur.fetchall()
     cur.close()
 

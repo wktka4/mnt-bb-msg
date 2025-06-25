@@ -22,7 +22,6 @@ export default function BlockPage() {
   // ブロック一覧
   const [blocks, setBlocks] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState("");
-  const [msgs, setMsgs] = useState([]);
 
   // コードの選択
   const selectedCode = (e, code) => {
