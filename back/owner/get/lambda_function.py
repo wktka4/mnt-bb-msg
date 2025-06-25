@@ -3,7 +3,7 @@ import logging
 import pymysql
 import json
 import os
-import math
+import base64
 
 import pymysql.cursors
 
@@ -29,29 +29,36 @@ except pymysql.MySQLError as e:
 
 logger.info("SUCCESS: Connection to RDS for MySQL instance succeeded")
 
-sql_max_page = "SELECT CEILING(COUNT(1)/20) AS 'max_page' FROM blockdata"
-sql_get_data = "SELECT * FROM blockdata ORDER BY code LIMIT %s, 20"
+sql_get_data = "" \
+    "SELECT * " \
+    "FROM tenji.owner o " \
+    "WHERE 1 = ( " \
+    "	SELECT o2.admin_flg " \
+    "	FROM tenji.owner o2 " \
+    "	WHERE o2.email = %s " \
+    ") " \
+    ";"
+
 
 def handler(event, context):
 
+    # jwtトークンのpayloadからemailを取得
+    id_token = event["headers"]["Authorization"]
+    payload_base64 = id_token.split(".")[1]
+    payload_base64 += "=" * (4-len(payload_base64) % 4)
+    payload = json.loads(base64.urlsafe_b64decode(
+        payload_base64).decode("utf-8"))
+    email = payload["email"]
+
+    # 管理者の時だけデータ取得
     cur = conn.cursor(pymysql.cursors.DictCursor)
-
-    # 最大件数を取得し、最大ページ数を作成
-    cur.execute(sql_max_page)
-    max_size = cur.fetchone()
-    max_size["max_page"] = int(max_size["max_page"])
-
-    # 20件ずつデータを取得する
-    offset = (int(event["queryStringParameters"]["page_no"]) - 1) * 20
-    cur.execute(sql_get_data, (offset,))
-
+    cur.execute(sql_get_data, (email, ))
     datas = cur.fetchall()
     cur.close()
 
     res_body = {
         "datas": datas
     }
-    res_body.update(max_size)
 
     return {
         "body": res_body

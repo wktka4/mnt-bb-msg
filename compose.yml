@@ -1,0 +1,86 @@
+services:
+
+  api_get_block:
+    build: ./back/block/get/
+    platform: linux/amd64
+    ports:
+      - 50000:8080
+    env_file:
+      - ./back/.env
+
+  api_get_msg:
+    build: ./back/msg/get/
+    platform: linux/amd64
+    ports:
+      - 50002:8080
+    env_file:
+      - ./back/.env
+
+  api_post_msg:
+    build: ./back/msg/post/
+    platform: linux/amd64
+    ports:
+      - 50003:8080
+    env_file:
+      - ./back/.env
+
+  api_get_owner:
+    build: ./back/owner/get/
+    platform: linux/amd64
+    ports:
+      - 50004:8080
+    env_file:
+      - ./back/.env
+
+  api_post_owner:
+    build: ./back/owner/post/
+    platform: linux/amd64
+    ports:
+      - 50005:8080
+    env_file:
+      - ./back/.env
+
+  api_get_ownership:
+    build: ./back/ownership/get/
+    platform: linux/amd64
+    ports:
+      - 50006:8080
+    env_file:
+      - ./back/.env
+  
+  api_post_ownership:
+    build: ./back/ownership/post/
+    platform: linux/amd64
+    ports:
+      - 50007:8080
+    env_file:
+      - ./back/.env
+  
+
+  front:
+    build: ./front/
+    ports:
+      - 3000:3000
+  
+  db:
+    image: mysql:8.4
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - 3306:3306
+    volumes:
+      - data:/var/lib/mysql
+      # - ./db/data:/var/lib/mysql
+      - ./db/conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./db/init:/docker-entrypoint-initdb.d
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 80:80
+
+volumes:
+  data:

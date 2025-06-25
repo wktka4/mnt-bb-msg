@@ -3,6 +3,11 @@
 --
 
 CREATE DATABASE tenji;
+CREATE USER 'test'@'%'
+  IDENTIFIED BY 'test';
+GRANT SELECT,INSERT,UPDATE,DELETE
+  ON tenji.*
+  TO 'test'@'%';
 
 
 --
